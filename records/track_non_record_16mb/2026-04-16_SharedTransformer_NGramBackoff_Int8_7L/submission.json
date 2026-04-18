@@ -1,0 +1,24 @@
+{
+  "author": "AlirezaAlampour",
+  "description": "V3: V2 stack (7-layer UNet, MLP\u00d74, Muon+EMA, Int8 QAT, 4h DGX Spark) + eval-only 5-order backoff n-gram cache mixed at \u03b1=0.2 with the model head. No change to the shipped artifact vs V2; the n-gram table is built online from scored validation tokens (legal score-first pattern, no peeking). 3-seed mean improves by 0.02894 BPB over V2 (1.39693 \u2192 1.36799).",
+  "hardware": "DGX Spark (1x GB10 Blackwell, 128GB unified)",
+  "track": "non_record_16mb",
+  "results": {
+    "seed_42":   {"bpb": 1.36736830, "steps": 1069},
+    "seed_1337": {"bpb": 1.36574516, "steps": 1061},
+    "seed_314":  {"bpb": 1.37084865, "steps": 1057}
+  },
+  "mean_bpb": 1.36799,
+  "artifact_size_bytes": 15715596,
+  "techniques": [
+    "unet_skip_connections",
+    "7_layers_4x_mlp",
+    "int8_qat",
+    "leaky_relu_squared",
+    "ema_decay_0997",
+    "muon_optimizer",
+    "long_training_4hr",
+    "eval_time_ngram_backoff_5order",
+    "legal_score_first_cache"
+  ]
+}

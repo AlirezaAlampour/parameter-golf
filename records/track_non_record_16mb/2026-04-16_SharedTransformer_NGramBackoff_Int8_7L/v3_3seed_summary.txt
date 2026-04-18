@@ -1,0 +1,7 @@
+v3 3-seed summary - generated Thu Apr 16 10:15:48 PM PDT 2026
+
+Seed 42 (recovered): 1.36737
+Seed 1337 (v3_seed1337_20260416_103916.log): val_bpb:1.36574516 | step:1061 | max_wallclock_seconds:14400.000
+Seed 314 (v3_seed314_20260416_160437.log): val_bpb:1.37084865 | step:1057 | max_wallclock_seconds:14400.000
+
+v2 baseline mean: 1.39693
