@@ -1,0 +1,11 @@
+seed: 1337
+ckpt: experiments/checkpoints_v31/final_model_seed1337.int8.ptz
+stride: 64
+batch_seqs: 1024
+n_windows: 969088
+val_loss: 2.30639145
+val_bpb: 1.36597668
+tokens: 62022592
+bytes: 151082508
+tokens_per_byte: 0.41052133
+eval_time_seconds: 19335.374

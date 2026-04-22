@@ -1,0 +1,98 @@
+DETERMINISM NOTE — V3 vs V3.1 seed-1337 training trajectories
+==============================================================
+
+Context: seed 1337 was retrained for V3.1 (with the filename-fix
+applied to train_gpt.py). The resulting V3.1 seed-1337 checkpoint
+produces a slightly different sliding-eval BPB than V3 seed-1337's
+checkpoint (1.36598 vs V3's 1.36575 post-ngram). This note documents
+that the difference is ordinary GPU non-determinism, not a code
+regression.
+
+TRAINING-LOSS COMPARISON (first 10 steps)
+
+  Step | V3 train_loss | V3.1 train_loss |   Δ
+  -----|---------------|-----------------|---------
+    0  |     val       |     val         | (val_bpb 4.1081 in both — random init identical)
+    1  |   6.9359      |   6.9359        |  0.0000    <- IDENTICAL
+    2  |   9.3441      |   9.3448        | +0.0007
+    3  |   6.7733      |   6.7984        | +0.0251
+    4  |   5.8506      |   5.8512        | +0.0006
+    5  |   5.8727      |   5.8517        | −0.0210
+    6  |   6.0082      |   5.9915        | −0.0167
+    7  |   5.9824      |   5.9754        | −0.0070
+    8  |   5.9003      |   5.9031        | +0.0028
+    9  |   5.7594      |   5.7683        | +0.0089
+   10  |   5.6148      |   5.6330        | +0.0182
+
+  Step 0 val_bpb (before any training): 4.1081 in both runs →
+    random init identical.
+  Step 1: bit-identical train_loss → first forward + backward +
+    optimizer update is identical.
+  Step 2: diverges by +0.0007 → accumulated floating-point
+    non-determinism in CUDA matmul reductions, tens of millions of
+    adds per step, with non-deterministic tile/reduction ordering.
+  Step 10 and beyond: accumulated drift, both directions.
+
+SDPA BACKENDS (logged as identical by both runs)
+  sdp_backends: cudnn=False  flash=True  mem_efficient=False  math=False
+
+BYTE-LEVEL CODE DIFFERENCE BETWEEN THE TWO RUNS
+  The only change to the training script between the V3 seed-1337 run
+  (2026-04-16) and the V3.1 seed-1337 run (2026-04-19) was the
+  filename bug fix (see BUGS.md for the post-mortem):
+
+    - Added `output_dir` hparam (env var `OUTPUT_DIR`).
+    - Replaced three literal filenames (`final_model.pt`,
+      `final_model.int6.ptz`, `final_model.int8.ptz`) with
+      `os.path.join(args.output_dir, f"final_model_seed{args.seed}.<ext>")`.
+    - Added `os.makedirs(args.output_dir, exist_ok=True)` guard.
+
+  All three changes live AFTER the main training loop exits
+  (in the serialization path). None of them touch:
+    - seeding,
+    - model construction,
+    - optimizer construction,
+    - forward/backward,
+    - the step loop,
+    - EMA application.
+
+  Training-loop code is unchanged.
+
+WALLCLOCK COMPARISON
+  V3   step_avg: 13,576 ms/step  →  1061 steps in 4 h cap
+  V3.1 step_avg: 13,846 ms/step  →  1040 steps in 4 h cap
+
+  V3.1 was ~2% slower per step. Over 4 h, this is 21 fewer steps.
+  A slower per-step wallclock is consistent with the divergent
+  trajectory story: different CUDA op paths (different flash-attn
+  tile sizes, different allocator state, different thermal/clock
+  state on the GB10) produce both numerical drift AND wallclock
+  drift.
+
+FINAL VAL_BPB COMPARISON (pre-EMA, pre-quant, in-script)
+  V3   step 1061: val_bpb 1.3718  (raw model during training)
+  V3.1 step 1040: val_bpb 1.3780  (raw model during training)
+
+  The V3 post-quant + EMA + ngram-mix number (1.36575) is from
+  eval_val_ngram running on the int8+zlib roundtripped checkpoint.
+  For V3.1 we did NOT run a post-quant roundtrip eval in-script
+  (the eval_val_ngram call path was dropped for V3.1 — Section 6
+  of the submission README explains why). The V3.1 seed-1337 BPB
+  of 1.36598 comes from eval_sliding_v31.py running on the exact
+  int8+zlib checkpoint file (decompress -> dequantize ->
+  load_state_dict).
+
+CONSEQUENCE
+  Seed 1337's V3.1 BPB of 1.36598 reflects ONE sampled trajectory
+  from the seed's distribution on this hardware + code + non-
+  deterministic CUDA backend. A re-retrain would produce a slightly
+  different number. This matches repo norms — V2 and other merged
+  submissions also train non-deterministically.
+
+  No bug was found. The +0.00023 BPB gap vs V3's post-ngram number
+  (1.36598 − 1.36575) is well within the trajectory-variance band
+  and is entangled with the change from chunked+ngram eval to
+  sliding-only eval (two methodology changes at once). The
+  submission README therefore frames V3.1 against V2 (a clean
+  published baseline), not against V3 (which was never reviewed
+  and is an unmerged branch).

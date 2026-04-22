@@ -1,0 +1,98 @@
+OVERNIGHT SWEEP RESULTS — seed 314 checkpoint
+============================================================
+Completed: 2026-04-18 09:02:35
+Target: experiments/checkpoints_locked/final_model_seed314.int8.ptz
+v3 baseline (seed 314): val_bpb = 1.37084865
+
+NOTE: seed 1337 checkpoint was overwritten before this session
+  (checkpoint-filename bug — see ~/parameter-golf/BUGS.md).
+  All sweep results here are on seed 314 only. A seed 1337
+  confirmation run is required before committing to a v4 recipe.
+
+============================================================
+JOB 1 — SLIDING-WINDOW SWEEP (6 cells)
+============================================================
+ stride  ngram      val_bpb        delta
+     64  False   1.36164861  -0.00920004
+     64   True   1.36797594  -0.00287271
+    128  False   1.36178907  -0.00905958
+    128   True   1.36804209  -0.00280656
+    256  False   1.36237843  -0.00847022
+    256   True   1.36846000  -0.00238865
+
+best ngram=True : stride=64 bpb=1.36797594 delta=-0.00287271
+best ngram=False: stride=64 bpb=1.36164861 delta=-0.00920004
+
+============================================================
+JOB 2 — ALPHA x MAX_ORDER SWEEP (21 cells)
+============================================================
+
+  max_order = 5
+   alpha      val_bpb        delta
+    0.15   1.36344903  -0.00739962
+    0.20   1.36797594  -0.00287271
+    0.25   1.37348064  +0.00263199
+    0.30   1.37986276  +0.00901411
+    0.35   1.38708111  +0.01623246
+    0.40   1.39513190  +0.02428325
+    0.50   1.41385560  +0.04300695
+
+  max_order = 7
+   alpha      val_bpb        delta
+    0.15   1.36608381  -0.00476484
+    0.20   1.37125899  +0.00041034
+    0.25   1.37736292  +0.00651427
+    0.30   1.38431079  +0.01346214
+    0.35   1.39207310  +0.02122445
+    0.40   1.40065588  +0.02980723
+    0.50   1.42044336  +0.04959471
+
+  max_order = 9
+   alpha      val_bpb        delta
+    0.15   1.36697604  -0.00387261
+    0.20   1.37238169  +0.00153304
+    0.25   1.37870824  +0.00785959
+    0.30   1.38587592  +0.01502727
+    0.35   1.39385922  +0.02301057
+    0.40   1.40266763  +0.03181898
+    0.50   1.42293439  +0.05208574
+
+best : alpha=0.15 max_order=5 stride=64 bpb=1.36344903 delta=-0.00739962
+
+============================================================
+RECOMMENDED V4 CONFIG
+============================================================
+Sliding window stride: 64 (Job 1 winner)
+N-gram alpha:          0.15  (Job 2 winner at stride 64)
+N-gram max_order:      5
+
+Naive stacked delta estimate: -0.01027233 BPB vs baseline 1.37084865
+  -> estimated v4 BPB on seed 314: 1.36057632
+
+CAVEATS:
+ - Stack estimate double-counts the alpha-dependent portion if Job 2 used
+   the same stride winner. Inspect job2_best['stride'] vs job1_best_on['stride'].
+ - The correctness of the corrected sliding-window (first-window-full)
+   was not compared against the v3 eval's existing stride-512 number;
+   tiny offset (< 1e-5 BPB) expected from first-window cold-start fix.
+ - Absolute BPB is for seed 314 only; Jobs 1 & 2 have not been replicated
+   on seed 1337 or seed 42 (both checkpoints missing).
+
+============================================================
+NEXT STEPS (v4 PR path)
+============================================================
+ 1. Fix checkpoint-filename bug in train_gpt_spark.py (see BUGS.md).
+ 2. Retrain all 3 seeds under v4 config; retain per-seed checkpoints.
+ 3. Re-run eval_sweep.py across all 3 seeds with the v4 config only (no sweep).
+ 4. Verify mean BPB delta vs v3 (1.36799) >= expected.
+ 5. Build v4 PR mirroring the v3 layout.
+
+ARTIFACTS
+============================================================
+ /home/xxfactionsxx/parameter-golf/logs/sliding_sweep_summary.txt
+ /home/xxfactionsxx/parameter-golf/logs/alpha_order_sweep_summary.txt
+ /home/xxfactionsxx/parameter-golf/logs/sliding_sweep_s*_ngram*.log
+ /home/xxfactionsxx/parameter-golf/logs/alpha_order_s*_o*.log
+ /home/xxfactionsxx/parameter-golf/logs/pm_stride*.log, pn_order*.log  (cache build logs)
+ experiments/eval_cache_seed314/*.npy        (cache arrays, ~1.5GB total)
+ experiments/checkpoints_locked/final_model_seed314.int8.ptz (LOCKED, chmod 444)

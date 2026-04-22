@@ -1,0 +1,109 @@
+logs/v31_seed1337.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:1
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:20725304
+world_size:1 grad_accum_steps:8
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.021552090970329115 head_lr:0.0 matrix_lr:0.08261619767374824 scalar_lr:0.014691154447587356
+train_batch_tokens:524288 train_seq_len:1024 iterations:20000 warmup_steps:20 max_wallclock_seconds:14400.000
+seed:1337
+[rank0]:W0419 00:48:29.259000 1357487 torch/_inductor/utils.py:1731] [0/0] Not enough SMs to use max_autotune_gemm mode
+warmup_step:1/20
+warmup_step:2/20
+warmup_step:3/20
+warmup_step:4/20
+warmup_step:5/20
+warmup_step:6/20
+warmup_step:7/20
+warmup_step:8/20
+warmup_step:9/20
+warmup_step:10/20
+warmup_step:11/20
+warmup_step:12/20
+warmup_step:13/20
+warmup_step:14/20
+warmup_step:15/20
+warmup_step:16/20
+warmup_step:17/20
+warmup_step:18/20
+warmup_step:19/20
+warmup_step:20/20
+ema:enabled decay=0.997 params=72
+step:0/20000 val_loss:6.9364 val_bpb:4.1081 train_time:0ms step_avg:0.01ms
+step:1/20000 train_loss:6.9359 train_time:13653ms step_avg:13653.07ms
+step:2/20000 train_loss:9.3448 train_time:27318ms step_avg:13659.03ms
+step:3/20000 train_loss:6.7984 train_time:41007ms step_avg:13668.84ms
+step:4/20000 train_loss:5.8512 train_time:54695ms step_avg:13673.73ms
+step:5/20000 train_loss:5.8517 train_time:68381ms step_avg:13676.20ms
+step:6/20000 train_loss:5.9915 train_time:82095ms step_avg:13682.58ms
+step:7/20000 train_loss:5.9754 train_time:95821ms step_avg:13688.74ms
+step:8/20000 train_loss:5.9031 train_time:109579ms step_avg:13697.44ms
+step:9/20000 train_loss:5.7683 train_time:123344ms step_avg:13704.89ms
+step:10/20000 train_loss:5.6330 train_time:137115ms step_avg:13711.50ms
+step:200/20000 train_loss:2.7920 train_time:2766807ms step_avg:13834.04ms
+step:400/20000 train_loss:2.5344 train_time:5536883ms step_avg:13842.21ms
+step:600/20000 train_loss:2.4712 train_time:8307242ms step_avg:13845.40ms
+step:800/20000 train_loss:2.2729 train_time:11077295ms step_avg:13846.62ms
+step:1000/20000 train_loss:2.3942 train_time:13846445ms step_avg:13846.45ms
+step:1000/20000 val_loss:2.3293 val_bpb:1.3796 train_time:13846473ms step_avg:13846.47ms
+step:1040/20000 val_loss:2.3267 val_bpb:1.3780 train_time:14400261ms step_avg:13846.40ms
+stopping_early: wallclock_cap train_time:14400261ms step:1040/20000
+peak memory allocated: 25436 MiB reserved: 25850 MiB
+ema:applying EMA weights
+ema:weights applied
+Serialized model: 81875521 bytes
+Code size: 62035 bytes
+Total submission size: 81937556 bytes
+Serialized model int8+zlib: 15509631 bytes
+Total submission size int8+zlib: 15571666 bytes
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/home/xxfactionsxx/parameter-golf/train_gpt_spark.py", line 1497, in <module>
+[rank0]:     main()
+[rank0]:   File "/home/xxfactionsxx/parameter-golf/train_gpt_spark.py", line 1476, in main
+[rank0]:     q_val_loss, q_val_bpb = eval_val_ngram(
+[rank0]:                             ^^^^^^^^^^^^^^^
+[rank0]:   File "/home/xxfactionsxx/parameter-golf/train_gpt_spark.py", line 463, in eval_val_ngram
+[rank0]:     bits_per_token = evaluate_ngram_mixed(
+[rank0]:                      ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/home/xxfactionsxx/.local/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank0]:     return func(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/home/xxfactionsxx/parameter-golf/train_gpt_spark.py", line 375, in evaluate_ngram_mixed
+[rank0]:     raise ValueError("Could not infer vocab_size from model or model.config")
+[rank0]: ValueError: Could not infer vocab_size from model or model.config
+[rank0]:[W419 05:21:07.881381824 ProcessGroupNCCL.cpp:1575] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+E0419 05:21:09.469000 1357459 torch/distributed/elastic/multiprocessing/api.py:986] failed (exitcode: 1) local_rank: 0 (pid: 1357487) of binary: /usr/bin/python3
+Traceback (most recent call last):
+  File "/home/xxfactionsxx/.local/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/xxfactionsxx/.local/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/xxfactionsxx/.local/lib/python3.12/site-packages/torch/distributed/run.py", line 990, in main
+    run(args)
+  File "/home/xxfactionsxx/.local/lib/python3.12/site-packages/torch/distributed/run.py", line 981, in run
+    elastic_launch(
+  File "/home/xxfactionsxx/.local/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xxfactionsxx/.local/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+train_gpt_spark.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-04-19_05:21:09
+  host      : localhost
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 1357487)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

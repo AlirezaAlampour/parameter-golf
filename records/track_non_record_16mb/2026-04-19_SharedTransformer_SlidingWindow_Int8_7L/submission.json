@@ -1,0 +1,30 @@
+{
+  "author": "AlirezaAlampour",
+  "description": "V3.1: same 7-layer UNet shared-transformer recipe as V2 (MLP×4, Muon+EMA, Int8 QAT, 4h training). Single change vs V2: validation eval uses stride-64 sliding window instead of chunked (stride = seq_len), matching the upstream 2026-03-19 SlidingWindowEval record (PR #77). 2-seed submission (seed 42 lost to a filename-collision bug, documented in BUGS.md; fix included in train_gpt.py, retrain deferred).",
+  "hardware": "DGX Spark (1x GB10 Blackwell, 128GB unified)",
+  "track": "non_record_16mb",
+  "eval": {
+    "method": "sliding_window",
+    "stride": 64,
+    "batch_seqs": 1024,
+    "train_seq_len": 1024,
+    "ngram": false
+  },
+  "results": {
+    "seed_314":  {"bpb": 1.36220548, "steps": 1057, "artifact_bytes": 15610091, "val_loss": 2.30002394},
+    "seed_1337": {"bpb": 1.36597668, "steps": 1040, "artifact_bytes": 15509631, "val_loss": 2.30639145}
+  },
+  "mean_bpb": 1.36409108,
+  "v2_baseline_mean_bpb": 1.39693,
+  "delta_vs_v2": -0.03283892,
+  "techniques": [
+    "unet_skip_connections",
+    "7_layers_4x_mlp",
+    "int8_qat",
+    "leaky_relu_squared",
+    "ema_decay_0997",
+    "muon_optimizer",
+    "long_training_4hr",
+    "sliding_window_eval_stride64"
+  ]
+}

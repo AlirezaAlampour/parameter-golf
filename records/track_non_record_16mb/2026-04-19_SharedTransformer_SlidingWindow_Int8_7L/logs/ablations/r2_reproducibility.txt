@@ -1,0 +1,61 @@
+R2 REPRODUCIBILITY CHECK — seed 314 sliding eval
+=================================================
+
+Purpose: verify the V3.1 eval code path reproduces the earlier
+overnight-sweep sliding-eval result on the same locked checkpoint
+before trusting it on the fresh seed-1337 retrain.
+
+CHECKPOINT
+  experiments/checkpoints_locked/final_model_seed314.int8.ptz
+  size:  15,610,091 B
+  perms: chmod 444
+  md5:   3478c45d37b5da95c78de544c30b5069
+
+EVAL CONFIG (identical across runs)
+  stride:      64
+  ngram:       OFF
+  batch_seqs:  1024
+  val corpus:  fineweb10B_sp1024/fineweb_val_*.bin, 62,021,632 tokens
+  hardware:    1x GB10 Blackwell (DGX Spark)
+
+RUNS
+
+  Overnight sweep (2026-04-18):
+    code path:  sweep-cells driver on cached p_model_stride64.npy
+    val_bpb:    1.36164861
+    source:     logs/sliding_sweep_s64_ngramFalse.log
+                (derived from pm_stride64 cache: windows=969,074,
+                 wallclock=14,131s)
+    tokens:     62,021,632
+
+  R2 re-eval via V3.1 code path (2026-04-20):
+    code path:  eval_sliding_v31.py (imports train_gpt_spark.py —
+                no module-level side effects; uses GPT, LUTs, int8
+                dequant; no n-gram machinery invoked)
+    val_loss:   2.30002394
+    val_bpb:    1.36220548
+    tokens:     62,022,592
+    wallclock:  20,011.7 s (~5.56 h)
+
+DELTA
+  R2 − overnight = 1.36220548 − 1.36164861 = +0.00055687 BPB
+
+CLASSIFICATION
+  |Δ| = 0.000557  <  0.001   →  PASS
+                     0.001-0.005 would be SUSPICIOUS
+                     > 0.005    would be FAIL
+
+INTERPRETATION
+  The V3.1 code path reproduces the overnight-sweep result on seed 314
+  to within <0.001 BPB. The small positive residual is consistent with
+  numerical-precision differences: the R2 run uses bf16 autocast in the
+  forward pass, while the overnight cache was written by a separate
+  model-output-probability pass whose precision settings (or SDPA
+  backend) may differ marginally. 62M tokens is a stable enough sample
+  that this residual is not sampling variance.
+
+  Sign is positive (R2 slightly higher BPB), direction is consistent
+  with a slight precision downgrade in the R2 path vs the cache, not
+  with a bug. The headline mean-BPB claim is robust against this
+  residual: a +0.00056 worst-case shift on seed 314 propagates to
+  +0.00028 on the 2-seed mean, compared to a Δ vs V2 of −0.03284.
